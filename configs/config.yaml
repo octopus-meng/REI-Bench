@@ -51,4 +51,3 @@ alfred:
   eval_portion_in_percent: 5
   random_seed_for_eval_subset: 1
 
-prompting_method_enabled: false
