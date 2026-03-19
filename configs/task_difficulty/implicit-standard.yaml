@@ -1,6 +1,0 @@
-# @package _global_
-task_difficulty_name: implicit-standard
-re_level: implicit
-context_type: standard
-data_type: "3-1"
-

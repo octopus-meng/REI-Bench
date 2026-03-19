@@ -1,6 +1,0 @@
-# @package _global_
-task_difficulty_name: implicit-noised
-re_level: implicit
-context_type: noised
-data_type: "3-2"
-
