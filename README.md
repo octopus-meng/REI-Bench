@@ -68,7 +68,7 @@ Note: This repository is under active development. If you encounter issues with 
 
 ## 📜 Citation
 
-If you use REI-Bench or TOCC in your work, please cite:
+If you use REI-Bench in your work, please cite:
 
 ```bibtex
   @inproceedings{jiang2026reibench,
