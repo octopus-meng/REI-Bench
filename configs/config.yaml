@@ -2,14 +2,12 @@ name: alfred
 
 defaults:
   - _self_
-  - task_difficulty: explicit-standard
+  - task_difficulty: standard-explicit
 
-# Hydra run dir: outputs/<timestamp> (no name subdir like alfred/)
 hydra:
   run:
     dir: outputs/${now:%Y-%m-%d}_${now:%H-%M-%S}
 
-# data_types: context-RE (context: standard | noised | short; RE: explicit | mixed | implicit)
 data_types:
   - standard-explicit
   - standard-mixed
@@ -27,10 +25,7 @@ split: 'data/rei_bench/splits/rei_bench.json'
 
 planner:
   model_name: "meta-llama/Llama-3.1-8B-Instruct"
-  # Alternatives: "Qwen/Qwen2.5-7B-Instruct", "gpt-4o-mini", "mistralai/Ministral-8B-Instruct-2410" 
-  # "google/gemma-2-9b-it" "deepseek-ai/deepseek-math-7b-instruct" "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
   max_steps: 30
-  # Override via CLI: planner.planner_framework=saycan | dag_plan | hpe_plan
   planner_framework: "saycan"
   device: "cuda"
   scoring_batch_size: 10
@@ -38,11 +33,11 @@ planner:
   scoring_mode: 'guidance'
   use_predefined_prompt: True
   use_accelerate_device_map: True
-  hf_auth_token: ''  
+  hf_auth_token: ''
   random_seed: 0
-  nl_act_list: ["find", "pick up", "open", "close", "switch on", "put down"] 
+  nl_act_list: ["find", "pick up", "open", "close", "switch on", "put down"]
   dynamic_skill_set: False
-  openai_api_key: ''  
+  openai_api_key: ''
 
 prompt:
   num_examples: 6
@@ -53,11 +48,7 @@ prompt:
 alfred:
   x_display: '1'
   eval_set: 'valid_seen'
-  eval_portion_in_percent: 5  # use a small set for a faster evaluationin. 100 means a full set.
+  eval_portion_in_percent: 5
   random_seed_for_eval_subset: 1
 
-prompting_method:
-  aware_hint: False
-  COT: False
-  TOCC: False
-  ICL: False
+prompting_method_enabled: false

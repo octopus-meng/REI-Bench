@@ -17,14 +17,11 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def measure_tokens_and_latency(self, prompt, output_text):
-    # input tokens
     if self.tokenizer is not None:
         input_ids = self.tokenizer(prompt, return_tensors="pt")["input_ids"].to(self.device)
         input_tokens = input_ids.shape[-1]
     else:
         input_tokens = -1
-
-    # output tokens
     if self.tokenizer is not None:
         output_ids = self.tokenizer(output_text, return_tensors="pt")["input_ids"].to(self.device)
         output_tokens = output_ids.shape[-1]
@@ -44,10 +41,7 @@ class TaskPlanner:
     def __init__(self, cfg):
         self.cfg = cfg
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # self.device2 = torch.device("cuda:1")
         self.max_steps = cfg.planner.max_steps
-        
-        # Use config mapper for new/old format compatibility
         self.planner_framework = get_planner_framework(cfg)
         model_config = get_model_config(cfg)
         self.model_name = model_config.get('model_name', get_model_name(cfg))
@@ -57,15 +51,13 @@ class TaskPlanner:
         self.score_function = cfg.planner.score_function
         self.scoring_mode = cfg.planner.scoring_mode
         self.use_predefined_prompt = cfg.planner.use_predefined_prompt
-        
-        # Get prompting method from new or old format
         self.AP = method_config.get('aware_hint', False)
         self.COT = method_config.get('COT', False)
         self.TOCC = method_config.get('TOCC', False)
         self.TOCC_referring_hint = ""
         self.tokenizer = None
 
-        if self.planner_framework == "saycan" or self.planner_framework == "dag_plan" or self.planner_framework == "hpe_plan":
+        if self.planner_framework == "saycan":
             model_args = {'pretrained_model_name_or_path': self.model_name, 'trust_remote_code': True,
                         'torch_dtype': torch.float16}
             use_accelerate = model_config.get('use_accelerate_device_map', 
@@ -88,10 +80,8 @@ class TaskPlanner:
                                                      getattr(cfg.planner, 'openai_api_key', ''))
                     os.environ["OPENAI_API_KEY"] = openai_api_key
                     self.planner_model = models.OpenAIChat(openai_model_name)
-                else: 
-                    # tokenizer 
+                else:
                     self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, force_download=True)
-                    # model
                     if "meta-llama" in self.model_name or 'mistralai' in self.model_name or 'deepseek' in self.model_name or "Qwen2.5" in self.model_name:
                         self.planner_model = models.Transformers(
                             self.model_name, 
@@ -118,6 +108,8 @@ class TaskPlanner:
                 self.tokenizer.pad_token_id = 0
 
             self.prompt = self.init_prompt(cfg)
+        else:
+            raise ValueError(f"Unsupported planner_framework: {self.planner_framework}. Only 'saycan' is supported.")
 
     def reset(self, nl_act_list, nl_obj_list):
         self.nl_obj_list = nl_obj_list
@@ -137,19 +129,13 @@ class TaskPlanner:
     
     
     def count_tokens(self, prompt: str, output_text: str):
-        """Count input/output/total tokens for local HF models."""
-
         if self.tokenizer is None:
             return -1, -1, -1
-
-        # input tokens
         try:
             input_ids = self.tokenizer(prompt, return_tensors="pt")["input_ids"]
             input_tokens = input_ids.shape[-1]
         except:
             input_tokens = -1
-
-        # output tokens
         try:
             output_ids = self.tokenizer(output_text, return_tensors="pt")["input_ids"]
             output_tokens = output_ids.shape[-1]
@@ -244,7 +230,7 @@ class TaskPlanner:
             prompt = self.prompt + f'Robot: {self.AP}\n' + f'{query.strip()}\nRobot: 1. '
         elif self.TOCC == True:
             if len(prev_steps) == 0: 
-                TOCC_hint= TOCC_hint = f"""
+                TOCC_hint = f"""
                     Human pending instruction may contain vague referring expressions, such as ``electronic devices'', ``beverages'', ``fruits'', and ``containers'', which are not specific items. \n
                     You are a robot, your task is to make the `Human Pending Instruction" clear. \n
                     Do not add extra commentary or conversation or the hole plan, only output the clear instruction. \n
@@ -303,7 +289,6 @@ class TaskPlanner:
         return best_step, prompt
 
     def _generate_fallback(self, prompt_text, max_new_tokens=200):
-        """Fallback when guidance raises AssertionError (token_byte_positions vs last_pos with some tokenizers e.g. Llama)."""
         if not (hasattr(self, 'planner_model') and hasattr(self.planner_model, 'model_obj') and self.tokenizer is not None):
             return None
         model = self.planner_model.model_obj
@@ -318,83 +303,6 @@ class TaskPlanner:
         input_len = inputs["input_ids"].shape[1]
         generated_ids = out[0][input_len:]
         return self.tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
-    
-    def plan_dag(self, dag_query, query, prev_steps=(), prev_msgs=(), wrong_steps=(), wrong_action_msg=(), reference=None):
-        if len(prev_steps) >= self.max_steps:
-            return None, None
-
-        if len(prev_steps) == 0: 
-            pattern = r"\[instruction\]"
-            dag_query = re.sub(pattern, query, dag_query, flags=re.IGNORECASE)
-            # dag_query = dag_query + "Please ended with \" . \" "
-            try:
-                dag_hint = self.planner_model + dag_query + gen(max_tokens=200)
-                dag_hint = str(dag_hint)[len(dag_query):]
-            except AssertionError:
-                dag_hint = self._generate_fallback(dag_query, max_new_tokens=200)
-                if dag_hint is None:
-                    raise
-            from dag_plan.dag2plan import dag_text_to_plan
-            try:
-                self.hint = dag_text_to_plan(dag_hint)
-            except:
-                self.hint = dag_hint
-            self.hint = str(self.hint)
-        
-        prompt = self.prompt + "hint:" + self.hint + f'{query.strip()}\nRobot: 1. '
-        # prompt = self.prompt + f'{query.strip()}\nRobot: 1. '
-
-        for i, (step, msg) in enumerate(zip(prev_steps, prev_msgs)):
-            if self.use_predefined_prompt and len(msg) > 0:
-                prompt += step + f' (this action failed: {msg.lower()}), {i + 2}. '
-            else:
-                prompt += step + f', {i + 2}. '
-
-        
-        best_step = self.score(prompt, self.skill_set)
-        best_step = best_step.strip()
-        return best_step, prompt
-
-    def plan_hpe(self, hpe_query, context, instruction, prev_steps=(), prev_msgs=(), wrong_steps=(), wrong_action_msg=(), reference=None):
-        if len(prev_steps) >= self.max_steps:
-            return None, None
-
-        if len(prev_steps) == 0: 
-            pattern = r"\[instruction\]"
-            hpe_query = re.sub(pattern, context, hpe_query, flags=re.IGNORECASE)
-            # dag_query = dag_query + "Please ended with \" . \" "
-            try:
-                memory_bank = self.planner_model + hpe_query + gen(max_tokens=100)
-                memory_bank = str(memory_bank)[len(hpe_query):]
-            except AssertionError:
-                memory_bank = self._generate_fallback(hpe_query, max_new_tokens=100)
-                if memory_bank is None:
-                    raise
-            hpe_query2 = "Please extract only the information from the Memory Bank that is most relevant and useful for accomplishing the task.Ignore any unrelated or redundant descriptions. Especially regarding the unclear parts of the instructions\n"
-            hpe_query2 =  hpe_query2 + "Memory Bank:" + memory_bank + "Instruction:" + instruction
-            try:
-                hpe_hint = self.planner_model + hpe_query2 + gen(max_tokens=200)
-                hpe_hint = str(hpe_hint)[len(hpe_query2):]
-            except AssertionError:
-                hpe_hint = self._generate_fallback(hpe_query2, max_new_tokens=200)
-                if hpe_hint is None:
-                    raise
-            self.hint = hpe_hint
-            self.hint = str(self.hint)
-        
-        prompt = self.prompt + "hint:" + self.hint + f'{instruction.strip()}\nRobot: 1. '
-        # prompt = self.prompt + f'{query.strip()}\nRobot: 1. '
-
-        for i, (step, msg) in enumerate(zip(prev_steps, prev_msgs)):
-            if self.use_predefined_prompt and len(msg) > 0:
-                prompt += step + f' (this action failed: {msg.lower()}), {i + 2}. '
-            else:
-                prompt += step + f', {i + 2}. '
-
-        
-        best_step = self.score(prompt, self.skill_set)
-        best_step = best_step.strip()
-        return best_step, prompt
 
     def duplicate_past_key_values(self, past_key_values, batch_size):
         batch_past_key_values = []
