@@ -24,7 +24,7 @@ Evaluation requires your own data; set the `split` and data paths in `configs/co
 **Environment**
 
 ```bash
-conda env create -f requriements.yaml
+conda env create -f requirements.yaml
 conda activate reibench
 ```
 
