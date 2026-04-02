@@ -1,0 +1,905 @@
+objects:
+  # ============ FOOD ============
+  - id: "Apple"
+    name: "Apple"
+    category: "FOOD"
+    tags: ["fruit", "red", "sliceable"]
+    physical:
+      weight: 180.0
+      material: "FOOD"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_slice: true
+
+  - id: "Potato"
+    name: "Potato"
+    category: "FOOD"
+    tags: ["vegetable", "sliceable"]
+    physical:
+      weight: 200.0
+      material: "FOOD"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_slice: true
+
+  - id: "Tomato"
+    name: "Tomato"
+    category: "FOOD"
+    tags: ["vegetable", "red", "sliceable"]
+    physical:
+      weight: 120.0
+      material: "FOOD"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_slice: true
+
+  - id: "Bread"
+    name: "Bread"
+    category: "FOOD"
+    tags: ["bakery", "sliceable"]
+    physical:
+      weight: 400.0
+      material: "FOOD"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_slice: true
+
+  - id: "Egg"
+    name: "Egg"
+    category: "FOOD"
+    tags: ["protein"]
+    physical:
+      weight: 50.0
+      material: "FOOD"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "Lettuce"
+    name: "Lettuce"
+    category: "FOOD"
+    tags: ["vegetable", "green", "sliceable"]
+    physical:
+      weight: 300.0
+      material: "FOOD"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_slice: true
+
+  - id: "WineBottle"
+    name: "WineBottle"
+    category: "FOOD"
+    tags: ["beverage", "container"]
+    physical:
+      weight: 750.0
+      volume_capacity: 750.0
+      material: "GLASS"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "WateringCan"
+    name: "WateringCan"
+    category: "FOOD"
+    tags: ["garden", "container"]
+    physical:
+      weight: 500.0
+      volume_capacity: 2000.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_pour: true
+
+  # ============ UTENSIL ============
+  - id: "Knife"
+    name: "Knife"
+    category: "UTENSIL"
+    tags: ["cutting", "metal"]
+    physical:
+      weight: 150.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_cut: true
+
+  - id: "ButterKnife"
+    name: "ButterKnife"
+    category: "UTENSIL"
+    tags: ["cutting", "metal"]
+    physical:
+      weight: 80.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_cut: true
+
+  - id: "Spoon"
+    name: "Spoon"
+    category: "UTENSIL"
+    tags: ["metal"]
+    physical:
+      weight: 50.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_support: true
+
+  - id: "Fork"
+    name: "Fork"
+    category: "UTENSIL"
+    tags: ["metal"]
+    physical:
+      weight: 45.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_cut: true
+
+  - id: "Plate"
+    name: "Plate"
+    category: "UTENSIL"
+    tags: ["ceramic"]
+    physical:
+      weight: 300.0
+      material: "CERAMIC"
+    affordance:
+      can_pick: true
+      can_support: true
+      can_contain: true
+
+  - id: "Bowl"
+    name: "Bowl"
+    category: "UTENSIL"
+    tags: ["ceramic"]
+    physical:
+      weight: 250.0
+      volume_capacity: 500.0
+      material: "CERAMIC"
+    affordance:
+      can_pick: true
+      can_support: true
+      can_contain: true
+
+  - id: "Cup"
+    name: "Cup"
+    category: "UTENSIL"
+    tags: ["ceramic"]
+    physical:
+      weight: 150.0
+      volume_capacity: 300.0
+      material: "CERAMIC"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_support: true
+
+  - id: "Mug"
+    name: "Mug"
+    category: "UTENSIL"
+    tags: ["ceramic", "handle"]
+    physical:
+      weight: 200.0
+      volume_capacity: 350.0
+      material: "CERAMIC"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_support: true
+
+  - id: "Glassbottle"
+    name: "GlassBottle"
+    category: "UTENSIL"
+    tags: ["glass", "container"]
+    physical:
+      weight: 400.0
+      volume_capacity: 500.0
+      material: "GLASS"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_pour: true
+
+  - id: "Spatula"
+    name: "Spatula"
+    category: "UTENSIL"
+    tags: ["kitchen", "cooking"]
+    physical:
+      weight: 100.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+
+  - id: "Ladle"
+    name: "Ladle"
+    category: "UTENSIL"
+    tags: ["kitchen", "cooking"]
+    physical:
+      weight: 150.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_pour: true
+
+  - id: "Pan"
+    name: "Pan"
+    category: "UTENSIL"
+    tags: ["kitchen", "cooking"]
+    physical:
+      weight: 800.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_support: true
+      can_heat: true
+
+  - id: "Pot"
+    name: "Pot"
+    category: "UTENSIL"
+    tags: ["kitchen", "cooking"]
+    physical:
+      weight: 1000.0
+      volume_capacity: 3000.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_support: true
+      can_heat: true
+
+  - id: "SaltShaker"
+    name: "SaltShaker"
+    category: "UTENSIL"
+    tags: ["kitchen", "seasoning"]
+    physical:
+      weight: 100.0
+      material: "GLASS"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "PepperShaker"
+    name: "PepperShaker"
+    category: "UTENSIL"
+    tags: ["kitchen", "seasoning"]
+    physical:
+      weight: 100.0
+      material: "GLASS"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "DishSponge"
+    name: "DishSponge"
+    category: "UTENSIL"
+    tags: ["cleaning"]
+    physical:
+      weight: 20.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+
+  - id: "SoapBar"
+    name: "SoapBar"
+    category: "UTENSIL"
+    tags: ["cleaning"]
+    physical:
+      weight: 100.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+
+  - id: "SoapBottle"
+    name: "SoapBottle"
+    category: "UTENSIL"
+    tags: ["cleaning", "container"]
+    physical:
+      weight: 300.0
+      volume_capacity: 500.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "SprayBottle"
+    name: "SprayBottle"
+    category: "UTENSIL"
+    tags: ["cleaning", "container"]
+    physical:
+      weight: 150.0
+      volume_capacity: 500.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "Cloth"
+    name: "Cloth"
+    category: "UTENSIL"
+    tags: ["cleaning", "fabric"]
+    physical:
+      weight: 50.0
+      material: "FABRIC"
+    affordance:
+      can_pick: true
+
+  - id: "Plunger"
+    name: "Plunger"
+    category: "UTENSIL"
+    tags: ["cleaning", "bathroom"]
+    physical:
+      weight: 300.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+
+  - id: "TissueBox"
+    name: "TissueBox"
+    category: "UTENSIL"
+    tags: ["paper", "container"]
+    physical:
+      weight: 150.0
+      material: "PAPER"
+    affordance:
+      can_pick: true
+      can_contain: true
+
+  - id: "ToiletPaper"
+    name: "ToiletPaper"
+    category: "UTENSIL"
+    tags: ["paper", "bathroom"]
+    physical:
+      weight: 200.0
+      material: "PAPER"
+    affordance:
+      can_pick: true
+
+  - id: "Candle"
+    name: "Candle"
+    category: "UTENSIL"
+    tags: ["decor", "light"]
+    physical:
+      weight: 100.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+
+  - id: "Vase"
+    name: "Vase"
+    category: "UTENSIL"
+    tags: ["decor", "container"]
+    physical:
+      weight: 400.0
+      volume_capacity: 1000.0
+      material: "CERAMIC"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_support: true
+
+  - id: "Statue"
+    name: "Statue"
+    category: "UTENSIL"
+    tags: ["decor"]
+    physical:
+      weight: 500.0
+      material: "CERAMIC"
+    affordance:
+      can_pick: true
+      can_support: true
+
+  - id: "Box"
+    name: "Box"
+    category: "UTENSIL"
+    tags: ["container", "cardboard"]
+    physical:
+      weight: 100.0
+      volume_capacity: 5000.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+      can_contain: true
+      can_support: true
+      can_open: true
+      can_close: true
+
+  - id: "Pencil"
+    name: "Pencil"
+    category: "UTENSIL"
+    tags: ["office"]
+    physical:
+      weight: 10.0
+      material: "WOOD"
+    affordance:
+      can_pick: true
+
+  - id: "Pen"
+    name: "Pen"
+    category: "UTENSIL"
+    tags: ["office"]
+    physical:
+      weight: 15.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+
+  - id: "BaseballBat"
+    name: "BaseballBat"
+    category: "UTENSIL"
+    tags: ["sports"]
+    physical:
+      weight: 900.0
+      material: "WOOD"
+    affordance:
+      can_pick: true
+
+  - id: "TennisRacket"
+    name: "TennisRacket"
+    category: "UTENSIL"
+    tags: ["sports"]
+    physical:
+      weight: 350.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+
+  - id: "BasketBall"
+    name: "BasketBall"
+    category: "UTENSIL"
+    tags: ["sports"]
+    physical:
+      weight: 600.0
+      material: "RUBBER"
+    affordance:
+      can_pick: true
+
+  - id: "Pillow"
+    name: "Pillow"
+    category: "UTENSIL"
+    tags: ["fabric", "comfort"]
+    physical:
+      weight: 500.0
+      material: "FABRIC"
+    affordance:
+      can_pick: true
+      can_support: true
+
+  - id: "AlarmClock"
+    name: "AlarmClock"
+    category: "UTENSIL"
+    tags: ["electronic", "time"]
+    physical:
+      weight: 200.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+      can_toggle: true
+
+  - id: "CreditCard"
+    name: "CreditCard"
+    category: "UTENSIL"
+    tags: ["plastic"]
+    physical:
+      weight: 5.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+
+  - id: "KeyChain"
+    name: "KeyChain"
+    category: "UTENSIL"
+    tags: ["metal"]
+    physical:
+      weight: 50.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+
+  - id: "CD"
+    name: "CD"
+    category: "UTENSIL"
+    tags: ["electronic", "media"]
+    physical:
+      weight: 15.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+
+  - id: "Book"
+    name: "Book"
+    category: "UTENSIL"
+    tags: ["paper", "reading"]
+    physical:
+      weight: 300.0
+      material: "PAPER"
+    affordance:
+      can_pick: true
+      can_support: true
+
+  - id: "Newspaper"
+    name: "Newspaper"
+    category: "UTENSIL"
+    tags: ["paper", "reading"]
+    physical:
+      weight: 200.0
+      material: "PAPER"
+    affordance:
+      can_pick: true
+
+  - id: "Watch"
+    name: "Watch"
+    category: "UTENSIL"
+    tags: ["accessory", "electronic"]
+    physical:
+      weight: 50.0
+      material: "METAL"
+    affordance:
+      can_pick: true
+
+  - id: "CellPhone"
+    name: "CellPhone"
+    category: "UTENSIL"
+    tags: ["electronic", "communication"]
+    physical:
+      weight: 150.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+      can_toggle: true
+
+  - id: "RemoteControl"
+    name: "RemoteControl"
+    category: "UTENSIL"
+    tags: ["electronic"]
+    physical:
+      weight: 100.0
+      material: "PLASTIC"
+    affordance:
+      can_pick: true
+
+  - id: "Laptop"
+    name: "Laptop"
+    category: "UTENSIL"
+    tags: ["electronic", "computer"]
+    physical:
+      weight: 1500.0
+      material: "COMPOSITE"
+    affordance:
+      can_pick: true
+      can_open: true
+      can_close: true
+      can_toggle: true
+
+  - id: "HandTowel"
+    name: "HandTowel"
+    category: "UTENSIL"
+    tags: ["fabric", "bathroom"]
+    physical:
+      weight: 100.0
+      material: "FABRIC"
+    affordance:
+      can_pick: true
+
+  # ============ APPLIANCE ============
+  - id: "Microwave"
+    name: "Microwave"
+    category: "APPLIANCE"
+    tags: ["kitchen", "cooking", "electric"]
+    physical:
+      weight: 12000.0
+      volume_capacity: 2000.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+      can_open: true
+      can_close: true
+      can_heat: true
+      can_contain: true
+
+  - id: "Faucet"
+    name: "Faucet"
+    category: "APPLIANCE"
+    tags: ["kitchen", "bathroom", "water", "toggleable"]
+    physical:
+      weight: 2000.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+
+  - id: "StoveBurner"
+    name: "StoveBurner"
+    category: "APPLIANCE"
+    tags: ["kitchen", "cooking", "heat"]
+    physical:
+      weight: 5000.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+      can_heat: true
+      can_support: true
+
+  - id: "DeskLamp"
+    name: "DeskLamp"
+    category: "APPLIANCE"
+    tags: ["lighting", "office", "electric"]
+    physical:
+      weight: 1500.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+      can_pick: true
+
+  - id: "FloorLamp"
+    name: "FloorLamp"
+    category: "APPLIANCE"
+    tags: ["lighting", "living room", "electric"]
+    physical:
+      weight: 4000.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+
+  - id: "CoffeeMachine"
+    name: "CoffeeMachine"
+    category: "APPLIANCE"
+    tags: ["kitchen", "beverage", "electric"]
+    physical:
+      weight: 5000.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+      can_contain: true
+
+  - id: "Kettle"
+    name: "Kettle"
+    category: "APPLIANCE"
+    tags: ["kitchen", "beverage", "electric"]
+    physical:
+      weight: 1000.0
+      volume_capacity: 1500.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+      can_contain: true
+      can_pick: true
+      can_pour: true
+      can_heat: true
+
+  - id: "Toaster"
+    name: "Toaster"
+    category: "APPLIANCE"
+    tags: ["kitchen", "electric"]
+    physical:
+      weight: 1500.0
+      material: "METAL"
+    affordance:
+      can_toggle: true
+      can_contain: true
+
+  # ============ FURNITURE ============
+  - id: "Bed"
+    name: "Bed"
+    category: "FURNITURE"
+    tags: ["bedroom", "sleep"]
+    physical:
+      weight: 50000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+
+  - id: "Sofa"
+    name: "Sofa"
+    category: "FURNITURE"
+    tags: ["living room", "seating"]
+    physical:
+      weight: 40000.0
+      material: "FABRIC"
+    affordance:
+      can_support: true
+
+  - id: "ArmChair"
+    name: "ArmChair"
+    category: "FURNITURE"
+    tags: ["living room", "seating"]
+    physical:
+      weight: 20000.0
+      material: "FABRIC"
+    affordance:
+      can_support: true
+
+  - id: "Ottoman"
+    name: "Ottoman"
+    category: "FURNITURE"
+    tags: ["living room", "seating"]
+    physical:
+      weight: 10000.0
+      material: "FABRIC"
+    affordance:
+      can_support: true
+      can_contain: true
+
+  - id: "DiningTable"
+    name: "DiningTable"
+    category: "FURNITURE"
+    tags: ["dining room"]
+    physical:
+      weight: 30000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+
+  - id: "CoffeeTable"
+    name: "CoffeeTable"
+    category: "FURNITURE"
+    tags: ["living room"]
+    physical:
+      weight: 15000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+
+  - id: "SideTable"
+    name: "SideTable"
+    category: "FURNITURE"
+    tags: ["bedroom", "living room"]
+    physical:
+      weight: 8000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+      can_contain: true
+
+  - id: "Desk"
+    name: "Desk"
+    category: "FURNITURE"
+    tags: ["office"]
+    physical:
+      weight: 25000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+      can_contain: true
+
+  - id: "Dresser"
+    name: "Dresser"
+    category: "FURNITURE"
+    tags: ["bedroom", "storage"]
+    physical:
+      weight: 35000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+      can_contain: true
+      can_open: true
+      can_close: true
+
+  - id: "Shelf"
+    name: "Shelf"
+    category: "FURNITURE"
+    tags: ["storage"]
+    physical:
+      weight: 10000.0
+      material: "WOOD"
+    affordance:
+      can_support: true
+
+  - id: "Toilet"
+    name: "Toilet"
+    category: "FURNITURE"
+    tags: ["bathroom"]
+    physical:
+      weight: 30000.0
+      material: "CERAMIC"
+    affordance:
+      can_support: true
+
+  - id: "Bathtub"
+    name: "Bathtub"
+    category: "FURNITURE"
+    tags: ["bathroom"]
+    physical:
+      weight: 80000.0
+      volume_capacity: 300000.0
+      material: "CERAMIC"
+    affordance:
+      can_contain: true
+      can_support: true
+
+  - id: "Sink"
+    name: "Sink"
+    category: "FURNITURE"
+    tags: ["bathroom", "kitchen", "water"]
+    physical:
+      weight: 10000.0
+      material: "CERAMIC"
+    affordance:
+      can_contain: true
+      can_support: true
+
+  - id: "Cabinet"
+    name: "Cabinet"
+    category: "FURNITURE"
+    tags: ["kitchen", "bathroom", "storage"]
+    physical:
+      weight: 20000.0
+      material: "WOOD"
+    affordance:
+      can_contain: true
+      can_support: true
+      can_open: true
+      can_close: true
+
+  - id: "Drawer"
+    name: "Drawer"
+    category: "FURNITURE"
+    tags: ["storage", "furniture"]
+    physical:
+      weight: 5000.0
+      material: "WOOD"
+    affordance:
+      can_contain: true
+      can_open: true
+      can_close: true
+
+  - id: "GarbageCan"
+    name: "GarbageCan"
+    category: "FURNITURE"
+    tags: ["kitchen", "bathroom", "trash"]
+    physical:
+      weight: 2000.0
+      volume_capacity: 50000.0
+      material: "METAL"
+    affordance:
+      can_contain: true
+      can_support: true
+
+  - id: "Safe"
+    name: "Safe"
+    category: "FURNITURE"
+    tags: ["security", "storage"]
+    physical:
+      weight: 30000.0
+      material: "METAL"
+    affordance:
+      can_contain: true
+      can_open: true
+      can_close: true
+
+  - id: "CounterTop"
+    name: "CounterTop"
+    category: "FURNITURE"
+    tags: ["kitchen"]
+    physical:
+      weight: 20000.0
+      material: "CERAMIC"
+    affordance:
+      can_support: true
+
+  - id: "ToiletPaperHanger"
+    name: "ToiletPaperHanger"
+    category: "FURNITURE"
+    tags: ["bathroom"]
+    physical:
+      weight: 500.0
+      material: "METAL"
+    affordance:
+      can_support: true
+
+  - id: "Cart"
+    name: "Cart"
+    category: "FURNITURE"
+    tags: ["kitchen", "movable"]
+    physical:
+      weight: 5000.0
+      material: "METAL"
+    affordance:
+      can_contain: true
+      can_support: true
+      can_pick: true
