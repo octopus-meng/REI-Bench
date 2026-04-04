@@ -121,10 +121,11 @@ class ThorConnector(ThorEnv):
 
         if not self.last_event.metadata['lastActionSuccess']:
             err = self.last_event.metadata.get('errorMessage', '')
+            msg = f"llm_skill_interact failed: instruction={instruction}, error={err}, ret={ret}"
             if 'nothing in hand to drop' in err:
-                log.debug(f"llm_skill_interact failed: {err}")
+                log.debug(msg)
             else:
-                log.warning(f"llm_skill_interact failed: {err}")
+                log.warning(msg)
 
         ret_dict = {
             'action': instruction,
@@ -144,6 +145,7 @@ class ThorConnector(ThorEnv):
         x = math.radians(x)
         y = math.radians(y)
         return math.degrees(math.atan2(math.sin(x - y), math.cos(x - y)))
+    
     def nav_obj(self, target_obj: str, prefer_sliced=False):
         objects = self.last_event.metadata['objects']
         ret_msg = ''

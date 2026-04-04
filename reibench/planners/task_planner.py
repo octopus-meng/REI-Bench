@@ -82,7 +82,7 @@ class TaskPlanner:
                     self.planner_model = models.OpenAIChat(openai_model_name)
                 else:
                     self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, force_download=True)
-                    if "meta-llama" in self.model_name or 'mistralai' in self.model_name or 'deepseek' in self.model_name or "Qwen2.5" in self.model_name:
+                    if "meta-llama" in self.model_name or 'mistralai' in self.model_name or 'deepseek' in self.model_name or "Qwen2.5" in self.model_name or "qwen2.5" in self.model_name:
                         self.planner_model = models.Transformers(
                             self.model_name, 
                             self.tokenizer, 
@@ -90,8 +90,7 @@ class TaskPlanner:
                             torch_dtype=torch.float16,
                         )
                     elif 'gemma' in self.model_name:
-                        self.planner_model = models.Transformers(self.model_name, self.tokenizer, device=self.device, torch_dtype=torch.bfloat16)
-
+                        self.planner_model = models.Transformers(self.model_name, self.tokenizer, device=self.device, torch_dtype=torch.bfloat16)               
                 logging.getLogger("guidance").setLevel(logging.WARNING)
 
             else:
@@ -151,7 +150,7 @@ class TaskPlanner:
                                 range(0, len(skill_set), self.scoring_batch_size)]
         torch.cuda.empty_cache()
         if self.scoring_mode == 'guidance':
-            if "meta-llama" in self.model_name or 'Qwen2.5' in self.model_name or 'mistralai' in self.model_name or 'gemma' in self.model_name or 'deepseek' in self.model_name:
+            if "meta-llama" in self.model_name or 'Qwen2.5' in self.model_name or 'mistralai' in self.model_name or 'gemma' in self.model_name or 'deepseek' in self.model_name or 'qwen2.5' in self.model_name:
                 out = self.planner_model + prompt + select(skill_set, name='best')
                 beststep = out['best']
             elif "gpt" in self.model_name:

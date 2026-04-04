@@ -59,6 +59,7 @@ def _load_task_difficulty_into_cfg(cfg, name: str, config_dir: str) -> bool:
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(cfg):
     from reibench.utils.config_mapper import get_data_types
+    from omegaconf import OmegaConf
 
     random.seed(cfg.planner.random_seed)
     torch.manual_seed(cfg.planner.random_seed)
@@ -74,9 +75,13 @@ def main(cfg):
     for data_type in data_types:
         print(f"Evaluating data_type: {data_type}")
         if _load_task_difficulty_into_cfg(cfg, data_type, config_dir):
+            OmegaConf.set_struct(cfg, False)
             cfg.data_type = None
+            OmegaConf.set_struct(cfg, True)
         else:
+            OmegaConf.set_struct(cfg, False)
             cfg.data_type = data_type
+            OmegaConf.set_struct(cfg, True)
         evaluator.evaluate()
             
 
