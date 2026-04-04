@@ -24,7 +24,7 @@ out_dir: ${hydra:run.dir}
 split: 'data/rei_bench/splits/rei_bench.json'
 
 planner:
-  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  model_name: "/home/octopus/Projects/REI/models/qwen2.5-0.5b" #"meta-llama/Llama-3.1-8B-Instruct"
   max_steps: 30
   planner_framework: "saycan"
   device: "cuda"
