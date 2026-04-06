@@ -12,6 +12,8 @@ sys.path.insert(0, './alfred')
 from PIL import Image, ImageDraw, ImageFont
 
 from reibench.planners.alfred_planner import AlfredTaskPlanner
+from reibench.planners.react_planner import ReactAlfredPlanner
+from reibench.planners.select_react_planner import SelectReactAlfredPlanner
 from reibench.envs.alfred.thor_connector import ThorConnector
 from reibench.envs.alfred.utils import dotdict, load_task_json
 from tqdm import tqdm
@@ -56,8 +58,15 @@ class AlfredEvaluator(Evaluator):
                     self.planner.reset()
             else:
                 self.planner = None
+        elif self.planner_framework == "react":
+            if len(cfg.planner.model_name) > 0:
+                if not getattr(self, 'planner', None):
+                    self.planner = ReactAlfredPlanner(cfg)
+                    self.planner.reset()
+            else:
+                self.planner = None
         else:
-            raise ValueError(f"Unknown planner_framework: {self.planner_framework}. Only 'saycan' is supported.")
+            raise ValueError(f"Unknown planner_framework: {self.planner_framework}. Only 'saycan' and 'react' are supported.")
 
         args_dict = {'data': 'data/raw/alfred/json_2.1.0', 'pframe': 300, 'fast_epoch': False,
                     'use_templated_goals': False, 'dout': 'exp/model', 'pp_folder': 'pp',
@@ -133,10 +142,10 @@ class AlfredEvaluator(Evaluator):
             traj_data = load_task_json(task, args_dict["data"])
             r_idx = task['repeat_idx']
             try:
-                if self.planner_framework == "saycan":
+                if self.planner_framework == "saycan" or self.planner_framework == "react":
                     result = self.evaluate_task_saycan(env, traj_data, r_idx, model_args, planner, save_path, log_prompt=False, train_gt_steps=train_gt_steps)
                 else:
-                    raise ValueError(f"Unsupported planner_framework: {self.planner_framework}. Only 'saycan' is supported.")
+                    raise ValueError(f"Unsupported planner_framework: {self.planner_framework}. Only 'saycan' and 'react' are supported.")
                 results.append(result)
                 status = "success" if result['success'] else "fail"
                 log.info(f"Task {i+1}/{len(tasks)}: {status}")
@@ -184,17 +193,17 @@ class AlfredEvaluator(Evaluator):
         reward = 0
         imgs = [Image.fromarray(env.last_event.frame)]
 
-        if self.cfg.planner.model_name.endswith('gpt-3.5-turbo') or 'gpt-4' in self.cfg.planner.model_name:
+        if self.cfg.planner.model_name.endswith('gpt-3.5-turbo') or 'gpt-4' in self.cfg.planner.model_name or self.planner_framework == "react":
             step_by_step_mode = False
         else:
             step_by_step_mode = True
-
+        
+        start = time.perf_counter()
         if step_by_step_mode:
             goal_satisfied = False
             prev_steps = []
             prev_action_msg = []
             step_num = 0
-            start = time.perf_counter()
             while not done:
                 if self.cfg.alfred.eval_set == 'train' and train_gt_steps is not None:
                     if t >= len(train_gt_steps[traj_data['task_id']]):
@@ -211,11 +220,6 @@ class AlfredEvaluator(Evaluator):
                 if log_prompt:
                     log.info(prompt)
                 prev_steps.append(step)
-
-                if step in ['done', 'done.', 'done.\n']:
-                    done = True
-                    prev_action_msg.append('')
-                    break
 
                 step_to_execute = step
 
@@ -239,8 +243,6 @@ class AlfredEvaluator(Evaluator):
                 t_reward, t_done = env.get_transition_reward()
                 reward += t_reward
                 t += 1
-            end = time.perf_counter()
-            whole_latency_ms = (end - start) * 1000
         else:
             replan_times = 0
             goal_satisfied = False
@@ -274,7 +276,8 @@ class AlfredEvaluator(Evaluator):
                     t += 1
                 goal_satisfied = env.get_goal_satisfied()
                 replan_times += 1
-        
+        end = time.perf_counter()
+        whole_latency_ms = (end - start) * 1000
         if step_by_step_mode and not 'DeepSeek-R1-Distill' in self.cfg.planner.model_name:
             goal_satisfied = env.get_goal_satisfied()
 

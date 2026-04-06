@@ -178,6 +178,8 @@ class KnowledgeBase:
             kb.query_entities_attr(kb.get_all(), "state.is_open")
             kb.query_entities_attr(results, "physical.material")
         """
+        if entities is None:
+            entities = list(self._objects.keys())
         results = []
         for entity in entities:
             value = entity.get_attr(attr_path)

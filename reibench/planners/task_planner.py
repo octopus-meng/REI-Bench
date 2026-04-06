@@ -57,7 +57,7 @@ class TaskPlanner:
         self.TOCC_referring_hint = ""
         self.tokenizer = None
 
-        if self.planner_framework == "saycan":
+        if self.planner_framework == "saycan" or self.planner_framework == "react":
             model_args = {'pretrained_model_name_or_path': self.model_name, 'trust_remote_code': True,
                         'torch_dtype': torch.float16}
             use_accelerate = model_config.get('use_accelerate_device_map', 
@@ -80,6 +80,12 @@ class TaskPlanner:
                                                      getattr(cfg.planner, 'openai_api_key', ''))
                     os.environ["OPENAI_API_KEY"] = openai_api_key
                     self.planner_model = models.OpenAIChat(openai_model_name)
+                elif "MiniMax" in self.model_name:
+                    import tiktoken
+                    openai_model_name = self.model_name
+                    os.environ["OPENAI_API_KEY"] = os.environ["MINIMAX_API_KEY"]
+                    tokenizer = tiktoken.get_encoding('cl100k_base')
+                    self.planner_model = models.OpenAIChat(openai_model_name, base_url="https://api.minimaxi.com/v1", tokenizer=tokenizer)
                 else:
                     self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, force_download=True)
                     if "meta-llama" in self.model_name or 'mistralai' in self.model_name or 'deepseek' in self.model_name or "Qwen2.5" in self.model_name or "qwen2.5" in self.model_name:
@@ -108,7 +114,7 @@ class TaskPlanner:
 
             self.prompt = self.init_prompt(cfg)
         else:
-            raise ValueError(f"Unsupported planner_framework: {self.planner_framework}. Only 'saycan' is supported.")
+            raise ValueError(f"Unsupported planner_framework: {self.planner_framework}. Only 'saycan' and 'react' are supported.")
 
     def reset(self, nl_act_list, nl_obj_list):
         self.nl_obj_list = nl_obj_list
