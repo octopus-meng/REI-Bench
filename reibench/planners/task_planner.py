@@ -1,3 +1,4 @@
+import openai
 import torch
 import torch._dynamo
 torch._dynamo.config.verbose = True
@@ -76,7 +77,7 @@ class TaskPlanner:
                 model_args.pop('pretrained_model_name_or_path')
                 if "gpt" in self.model_name:
                     openai_model_name = self.model_name
-                    openai_api_key = model_config.get('openai_api_key', 
+                    openai_api_key = model_config.get('openai_api_key',
                                                      getattr(cfg.planner, 'openai_api_key', ''))
                     os.environ["OPENAI_API_KEY"] = openai_api_key
                     self.planner_model = models.OpenAIChat(openai_model_name)
@@ -90,15 +91,20 @@ class TaskPlanner:
                     self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, force_download=True)
                     if "meta-llama" in self.model_name or 'mistralai' in self.model_name or 'deepseek' in self.model_name or "Qwen2.5" in self.model_name or "qwen2.5" in self.model_name:
                         self.planner_model = models.Transformers(
-                            self.model_name, 
-                            self.tokenizer, 
-                            device=self.device, 
+                            self.model_name,
+                            self.tokenizer,
+                            device=self.device,
                             torch_dtype=torch.float16,
                         )
                     elif 'gemma' in self.model_name:
-                        self.planner_model = models.Transformers(self.model_name, self.tokenizer, device=self.device, torch_dtype=torch.bfloat16)               
+                        self.planner_model = models.Transformers(self.model_name, self.tokenizer, device=self.device, torch_dtype=torch.bfloat16)
                 logging.getLogger("guidance").setLevel(logging.WARNING)
-
+            elif cfg.planner.scoring_mode == 'api':
+                if "MiniMax" in self.model_name:
+                    self.base_url = "https://api.minimaxi.com/v1/"
+                    self.api_key = os.environ.get("MINIMAX_API_KEY", "")
+                openai.base_url = self.base_url
+                openai.api_key = self.api_key
             else:
                 if "decapoda-research/llama" in self.model_name or "chainyo/alpaca" in self.model_name: 
                     self.model = LlamaForCausalLM.from_pretrained(**model_args)
@@ -165,6 +171,8 @@ class TaskPlanner:
             else:
                 out = self.guidance_program(prompt=prompt, candidates=skill_set)
             scores = out['score']
+        elif self.scoring_mode == 'api':
+            assert 0, "step by step not support api"
         else:
             assert False, 'unknown scoring mode'
         return beststep
@@ -184,41 +192,57 @@ class TaskPlanner:
                 previous_plan += step + f' (this action failed: {msg.lower()}), {i + 2}. '
             else:
                 previous_plan += step + f', {i + 2}. '
-
+                
         if len(prev_steps) == 0:
-            with user():
-                lm = self.planner_model + f"""
-                You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
-                Examples of human instructions and possible your (robot) answers:{example_text}
+            prompt_text = f"""You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
+Examples of human instructions and possible your (robot) answers:{example_text}
 
-                Now please answer the sequence of actions for the input instruction.
-                You should **only** use one of actions of this list: {skills_text}.
-                The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them. 
-                The 'Human Pending Instruction' section contains the instructions I need to follow and complete. 
-                List the actions with comma seperator.
-                Input user instruction:   
-                {query}
-                """
+Now please answer the sequence of actions for the input instruction.
+You should **only** use one of actions of this list: {skills_text}.
+You should **only** use one of actions of the upper list.
+You should **only** use one of actions of the upper list.
+The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them.
+The 'Human Pending Instruction' section contains the instructions I need to follow and complete.
+List the actions with comma seperator.
+Input user instruction:
+{query}
+Robot:"""
+        else:
+            prompt_text = f"""You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
+Examples of human instructions and possible your (robot) answers:{example_text}
+
+Now please answer the sequence of actions for the input instruction.
+You should **only** use one of actions of this list: {skills_text}.
+You should **only** use one of actions of the upper list.
+You should **only** use one of actions of the upper list.
+The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them.
+The 'Human Pending Instruction' section contains the instructions I need to follow and complete.
+Input user instruction:
+{query}
+Your previous plan was unsuccessful. Here are your plan and the reasons for the failure {previous_plan}.
+List the actions with comma seperator again.
+Robot:"""
+
+        if self.scoring_mode == 'api':
+            # Direct API call mode - use chat completions API
+            messages = [{"role": "user", "content": prompt_text}]
+            response = openai.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                temperature=0.,
+                max_tokens=4096
+            )
+            answer = response.choices[0].message.content.strip()
         else:
             with user():
-                lm = self.planner_model + f"""
-                You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
-                Examples of human instructions and possible your (robot) answers:{example_text}
-
-                Now please answer the sequence of actions for the input instruction.
-                You should **only** use one of actions of this list: {skills_text}.
-                You should **only** use one of actions of the upper list.
-                The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them. 
-                The 'Human Pending Instruction' section contains the instructions I need to follow and complete. 
-                Input user instruction:   
-                {query}
-                Your previous plan was unsuccessful. Here are your plan and the reasons for the failure {previous_plan}.
-                List the actions with comma seperator again.
-                """
-        with assistant():
-            lm += gen("answer", temperature=0)
-
-        answer = lm['answer']
+                lm = self.planner_model + prompt_text
+            with assistant():
+                lm += gen("answer", temperature=0)
+            answer = lm['answer']
+        if "MiniMax" in self.model_name:
+            answer = re.sub(r'<think>.*?</think>', '', answer, flags=re.DOTALL)
+        print(answer)
+        answer = answer.strip()
         answer = answer.replace('Robot: ', '')
         actions = [action.strip(' 1234567890.') for action in answer.split(',')]
         step_seq = actions

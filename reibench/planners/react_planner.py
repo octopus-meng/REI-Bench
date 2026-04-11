@@ -6,7 +6,7 @@ import logging
 import re
 import sys
 
-from guidance import gen, user, assistant
+import openai
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'household_kb'))
 
@@ -244,18 +244,20 @@ Think step by step. Before taking any action, reason about:
         if reasoning_history is None:
             reasoning_history = []
         
-        if "MiniMax" in self.model_name:
-            with user():
-                lm = self.planner_model + prompt
-            with assistant():
-                lm += gen("response", temperature=0.3, max_tokens=1024)
-        else:
-            lm = self.planner_model + prompt + gen("response", temperature=0, max_tokens=1024)
-        reasoning = lm['response']
+        if self.scoring_mode == 'api':
+            # Direct API call mode - use chat completions API
+            messages = [{"role": "user", "content": prompt}]
+            response = openai.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                temperature=0.,
+                max_tokens=4096
+            )
+            reasoning = response.choices[0].message.content.strip()
         if "MiniMax" in self.model_name:
             reasoning = re.sub(r'<think>.*?</think>', '', reasoning, flags=re.DOTALL)
+            
         reasoning = reasoning.replace('Robot: ', '').strip()
-        log.info(f"react step:{reasoning}")
         reasoning_history.append(reasoning)
 
         action_type, action_detail = self.parse_react_action(reasoning)
@@ -278,7 +280,7 @@ Think step by step. Before taking any action, reason about:
         return 'continue', prompt, reasoning_history
         
 
-    def plan_whole(self, query, prev_steps=..., prev_msgs=...):
+    def plan_whole(self, query, prev_steps=(), prev_msgs=()):
         step_seq = []
         skill_set_size_seq = []
 
@@ -292,15 +294,21 @@ Think step by step. Before taking any action, reason about:
         You should **only** use actions of the upper list.
         """ 
         prompt += f"\nHuman instruction: {query.strip()}\n"
-
-
-        prompt += "\nYour response ([PLAN]: ... / [QUERY]: ...):\n"
+        previous_plan = ""
+        for i, (step, msg) in enumerate(zip(prev_steps, prev_msgs)):
+            if self.use_predefined_prompt and len(msg) > 0:
+                previous_plan += step + f' (this action failed: {msg.lower()}), {i + 2}. '
+                
+        if len(prev_steps) == 0:
+            prompt += f"PLAN History: Your previous plan was unsuccessful. Here are your plan and the reasons for the failure {previous_plan}."
+        
         history = None
         for i in range(self.max_react_steps):
             if history:
-                prompt += "## Reasoning History:\n"
+                prompt += "## ReAct History:\n"
                 for reason in history[-5:]:
                     prompt += reason + "\n"
+            prompt += "\nYour response ([PLAN]: ... / [QUERY]: ...):\n"
             answer, prompt, history = self.react_step(query, prompt, history)
             if answer == 'continue':
                 continue

@@ -13,7 +13,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 from reibench.planners.alfred_planner import AlfredTaskPlanner
 from reibench.planners.react_planner import ReactAlfredPlanner
-from reibench.planners.select_react_planner import SelectReactAlfredPlanner
 from reibench.envs.alfred.thor_connector import ThorConnector
 from reibench.envs.alfred.utils import dotdict, load_task_json
 from tqdm import tqdm
@@ -193,7 +192,7 @@ class AlfredEvaluator(Evaluator):
         reward = 0
         imgs = [Image.fromarray(env.last_event.frame)]
 
-        if self.cfg.planner.model_name.endswith('gpt-3.5-turbo') or 'gpt-4' in self.cfg.planner.model_name or self.planner_framework == "react":
+        if self.cfg.planner.model_name.endswith('gpt-3.5-turbo') or 'gpt-4' in self.cfg.planner.model_name or 'MiniMax' in self.cfg.planner.model_name or self.planner_framework == "react":
             step_by_step_mode = False
         else:
             step_by_step_mode = True
