@@ -1,0 +1,9 @@
+react:
+exs-stand:success rate: 72.23 % (640/886)
+ixs-stand:success rate: 75.47 % (640/848)
+ixs-short:success rate: 40.86 % (315/771)
+
+saycan:
+exs-stand:success rate: 65.58 % (602/918)
+ixs-stand:success rate: 64.25 % (575/895)
+ixs-short:success rate: 35.79 % (296/827)
