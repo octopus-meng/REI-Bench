@@ -3,6 +3,8 @@
 from typing import Optional, List, Dict
 from entities import ObjectEntity, ObjectCategory
 from .query_engine import QueryEngine, QueryCriteria
+from reibench.envs.alfred.utils import natural_word_to_ithor_name
+
 
 
 class KnowledgeBase:
@@ -186,3 +188,127 @@ class KnowledgeBase:
             if value is not None:
                 results.append((entity, value))
         return results
+
+    def validate_action_plan(self, actions: List[str]) -> tuple:
+        """
+        Validate a plan's actions against the knowledge base.
+
+        Args:
+            actions: List of action strings (e.g., "1. pick up the ladle", "2. open the fridge")
+
+        Returns:
+            Tuple of (is_valid, error_messages)
+            - is_valid: True if all actions are valid
+            - error_messages: List of error messages for invalid actions (empty if valid)
+        """
+        import re
+
+        allowed_actions = {"find", "pick up", "open", "turn on", "close", "turn off", "slice", "put down"}
+
+        # Map actions to their required affordances
+        action_affordance_map = {
+            "pick up": "can_pick",
+            "open": "can_open",
+            "turn on": "can_toggle",
+        }
+
+        error_messages = []
+        validated_actions = []
+
+        for action_str in actions:
+            # Strip leading step number and period
+            action_str = re.sub(r'^\d+\.\s*', '', action_str.strip()).lower()
+
+            if action_str == "done":
+                validated_actions.append(("done", None))
+                continue
+
+            # Parse action and object name
+            matched = False
+            for action_verb in allowed_actions:
+                if action_verb == "find":
+                    # Format: "find a/an {object}"
+                    pattern = r'^find\s+(?:a|an)\s+(.+)'
+                    match = re.match(pattern, action_str)
+                    if match:
+                        obj_name = match.group(1).strip()
+                        entity = self._find_entity_by_name(obj_name)
+                        if entity is None:
+                            error_messages.append(f"Object '{obj_name}' not found in knowledge base")
+                        else:
+                            validated_actions.append(("find", obj_name))
+                        matched = True
+                        break
+                elif action_verb == "put down":
+                    # Format: "put down the {object}"
+                    pattern = r'^put\s+down\s+the\s+(.+)'
+                    match = re.match(pattern, action_str)
+                    if match:
+                        obj_name = match.group(1).strip()
+                        entity = self._find_entity_by_name(obj_name)
+                        if entity is None:
+                            error_messages.append(f"Object '{obj_name}' not found in knowledge base")
+                        else:
+                            validated_actions.append(("put down", obj_name))
+                        matched = True
+                        break
+                else:
+                    # Format: "{action} the {object}"
+                    pattern = rf'^{re.escape(action_verb)}\s+the\s+(.+)'
+                    match = re.match(pattern, action_str)
+                    if match:
+                        obj_name = match.group(1).strip()
+                        entity = self._find_entity_by_name(obj_name)
+
+                        if entity is None:
+                            error_messages.append(f"Object '{obj_name}' not found in knowledge base")
+                        else:
+                            required_affordance = action_affordance_map.get(action_verb)
+                            if required_affordance:
+                                affordance_value = entity.get_attr(f"affordance.{required_affordance}")
+                                if not affordance_value:
+                                    error_messages.append(
+                                        f"Object '{obj_name}' cannot be {action_verb} "
+                                        f"(affordance.{required_affordance}=False)"
+                                    )
+                                else:
+                                    validated_actions.append((action_verb, obj_name))
+                            else:
+                                validated_actions.append((action_verb, obj_name))
+                        matched = True
+                        break
+
+            if not matched:
+                # Try to identify what went wrong
+                verb_match = re.match(r'^(\w+)', action_str)
+                if verb_match:
+                    verb = verb_match.group(1)
+                    if verb not in [a.split()[0] for a in allowed_actions]:
+                        error_messages.append(f"Unknown action verb: '{verb}'")
+                    else:
+                        error_messages.append(f"Invalid action format: '{action_str}'")
+                else:
+                    error_messages.append(f"Invalid action format: '{action_str}'")
+
+        return len(error_messages) == 0, error_messages, validated_actions
+
+    def _find_entity_by_name(self, name: str) -> ObjectEntity:
+        """
+        Find an entity by its name (case-insensitive exact match).
+
+        Args:
+            name: Object name to search for (natural language format)
+
+        Returns:
+            ObjectEntity if found, None otherwise
+        """
+        # Convert natural word to iTHOR format
+        ithor_name = natural_word_to_ithor_name(name)
+        name_lower = name.lower()
+        ithor_name_lower = ithor_name.lower()
+
+        for entity in self._objects.values():
+            entity_name_lower = entity.name.lower()
+            if entity_name_lower == name_lower or entity_name_lower == ithor_name_lower:
+                return entity
+        return None

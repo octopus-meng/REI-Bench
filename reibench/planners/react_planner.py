@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import time
 from collections import defaultdict
 import logging
 import re
@@ -104,8 +105,8 @@ You are a robot assistant that uses reasoning and actions to complete household 
    - Example: [PLAN] 1. find a ladle, 2. pick up the ladle, 3. find a sink, 4. put down the ladle, 5. done.
 2. **[ASK]** - Ask the human for clarification when the instruction is ambiguous or missing required information.
    - Use when: The instruction contains vague references you cannot resolve with available context.
-   - Format: [ASK] <question to ask>
-   - Example: [ASK] What does it refer to.
+   - Format: [ASK] Please clarify the instruction.
+   - Example: [ASK] Please clarify the instruction.
 3. **[QUERY]** - Query the knowledge base to resolve ambiguities or get object information.
    - Use when: The instruction contains vague references like 'fruit', 'container', 'electronic device', 'the heavier one', or you need to find objects with specific properties.
    - Format: [QUERY] <query api>
@@ -137,14 +138,7 @@ Think step by step. Before taking any action, reason about:
         for react_action in self.REACT_ACTIONS:
             if action_str.startswith(react_action):
                 return react_action, action_str[len(react_action):].strip()
-
-        # if 'plan' in action_str.lower()[:20]:
-        #     return '[PLAN]', action_str[4:].strip() if len(action_str) > 4 else ''
-        # elif 'ask' in action_str.lower()[:20]:
-        #     return '[ASK]', action_str[3:].strip() if len(action_str) > 3 else ''
-        # elif 'query' in action_str.lower()[:20] or 'kb' in action_str.lower()[:20]:
-        #     return '[QUERY]', action_str[8:].strip() if len(action_str) > 8 else ''
-        # else:
+            
         return '[UNKNOWN ACTION]', action_str
     
     def execute_kb_query(self, query_str):
@@ -245,15 +239,24 @@ Think step by step. Before taking any action, reason about:
             reasoning_history = []
         
         if self.scoring_mode == 'api':
-            # Direct API call mode - use chat completions API
+
             messages = [{"role": "user", "content": prompt}]
-            response = openai.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                temperature=0.,
-                max_tokens=4096
-            )
-            reasoning = response.choices[0].message.content.strip()
+            max_retries = 5
+            for attempt in range(max_retries):
+                try:
+                    response = openai.chat.completions.create(
+                        model=self.model_name,
+                        messages=messages,
+                        temperature=0.,
+                        max_tokens=4096
+                    )
+                    reasoning = response.choices[0].message.content.strip()
+                    break
+                except openai.InternalServerError as e:
+                    if attempt < max_retries - 1:
+                        log.warning(f"OpenAI API overloaded, retrying (attempt {attempt + 1}/{max_retries})")
+                        continue
+                    raise
         if "MiniMax" in self.model_name:
             reasoning = re.sub(r'<think>.*?</think>', '', reasoning, flags=re.DOTALL)
             
@@ -269,10 +272,9 @@ Think step by step. Before taking any action, reason about:
             return 'continue', prompt, reasoning_history
 
         if action_type == '[ASK]':
-            return f"ask: {action_detail}", prompt, reasoning_history
+            return f"ask: Please clarify the instruction.", prompt, reasoning_history
         
         if action_type == '[PLAN]':
-            print("[plan mode]")
             return f'plan: {action_detail}', prompt, reasoning_history
         
         error_action_prompt = "The response does not start with [PLAN] or [QUERY]"
@@ -315,10 +317,18 @@ Think step by step. Before taking any action, reason about:
             elif answer.startswith('ask'):
                 assert 0, "not support ask"
             elif answer.startswith('plan'):
+                # Validate the plan against knowledge base
+                answer = answer.replace('plan: ', '')
+                actions = [action.strip(' 1234567890.') for action in answer.split(',')]
+                is_valid, errors, validated_actions = self.knowledge_base.validate_action_plan(actions)
+
+                if not is_valid:
+                    error_msg = " | ".join(errors)
+                    history.append(f"[PLAN VALIDATION FAILED] {error_msg}")
+                    continue
+
+                step_seq = actions
                 break
-        
-        answer = answer.replace('plan: ', '')
-        actions = [action.strip(' 1234567890.') for action in answer.split(',')]
-        step_seq = actions
+
         return step_seq, skill_set_size_seq
 
