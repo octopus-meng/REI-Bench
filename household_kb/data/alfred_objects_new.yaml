@@ -471,7 +471,6 @@ objects:
       material: "PLASTIC"
     affordance:
       can_pick: true
-      can_toggle: true
 
   - id: "CreditCard"
     name: "CreditCard"
@@ -543,7 +542,6 @@ objects:
       material: "PLASTIC"
     affordance:
       can_pick: true
-      can_toggle: true
 
   - id: "RemoteControl"
     name: "RemoteControl"
@@ -566,7 +564,6 @@ objects:
       can_pick: true
       can_open: true
       can_close: true
-      can_toggle: true
 
   - id: "HandTowel"
     name: "HandTowel"
@@ -612,7 +609,6 @@ objects:
       weight: 5000.0
       material: "METAL"
     affordance:
-      can_toggle: true
       can_heat: true
       can_support: true
 
@@ -625,7 +621,6 @@ objects:
       material: "METAL"
     affordance:
       can_toggle: true
-      can_pick: true
 
   - id: "FloorLamp"
     name: "FloorLamp"
@@ -645,7 +640,6 @@ objects:
       weight: 5000.0
       material: "METAL"
     affordance:
-      can_toggle: true
       can_contain: true
 
   - id: "Kettle"
@@ -657,21 +651,24 @@ objects:
       volume_capacity: 1500.0
       material: "METAL"
     affordance:
-      can_toggle: true
       can_contain: true
       can_pick: true
       can_pour: true
       can_heat: true
 
-  - id: "Toaster"
-    name: "Toaster"
+  - id: "Fridge"
+    name: "Fridge"
     category: "APPLIANCE"
-    tags: ["kitchen", "electric"]
+    tags: ["kitchen", "storage", "cooling"]
     physical:
-      weight: 1500.0
+      weight: 50000.0
+      volume_capacity: 300000.0
       material: "METAL"
     affordance:
-      can_toggle: true
+      can_open: true
+      can_close: true
+      can_contain: true
+      can_support: true
 
   # ============ FURNITURE ============
   - id: "Bed"
@@ -764,8 +761,6 @@ objects:
     affordance:
       can_support: true
       can_contain: true
-      can_open: true
-      can_close: true
 
   - id: "Shelf"
     name: "Shelf"
