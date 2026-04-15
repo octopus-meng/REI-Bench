@@ -17,6 +17,8 @@ from reibench.utils.config_mapper import (
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+log = logging.getLogger(__name__)
+
 def measure_tokens_and_latency(self, prompt, output_text):
     if self.tokenizer is not None:
         input_ids = self.tokenizer(prompt, return_tensors="pt")["input_ids"].to(self.device)
@@ -192,47 +194,34 @@ class TaskPlanner:
                 previous_plan += step + f' (this action failed: {msg.lower()}), {i + 2}. '
             else:
                 previous_plan += step + f', {i + 2}. '
-                
+        prompt_text = f"""You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
+Examples of human instructions and possible your (robot) answers:{example_text}
+
+Now please answer the sequence of actions for the input instruction.
+You should **only** use one of actions of this list: {skills_text}.
+You should **only** use one of actions of the upper list.
+You should **only** use one of actions of the upper list.
+The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them.
+The 'Human Pending Instruction' section contains the instructions I need to follow and complete.
+Input user instruction:
+{query}"""
         if len(prev_steps) == 0:
-            prompt_text = f"""You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
-Examples of human instructions and possible your (robot) answers:{example_text}
-
-Now please answer the sequence of actions for the input instruction.
-You should **only** use one of actions of this list: {skills_text}.
-You should **only** use one of actions of the upper list.
-You should **only** use one of actions of the upper list.
-The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them.
-The 'Human Pending Instruction' section contains the instructions I need to follow and complete.
-List the actions with comma seperator.
-Input user instruction:
-{query}
-Robot:"""
+            if self.TOCC:
+                self.tocc_answer = self.tocc_step(query)
+                prompt_text += f"\nHuman:{self.tocc_answer}"
+            
+            prompt_text += "\nRobot:"
         else:
-            prompt_text = f"""You are a robot operating in a home. A human user can ask you to do various tasks and you are supposed to tell the sequence of actions you would do to accomplish your task.
-Examples of human instructions and possible your (robot) answers:{example_text}
-
-Now please answer the sequence of actions for the input instruction.
-You should **only** use one of actions of this list: {skills_text}.
-You should **only** use one of actions of the upper list.
-You should **only** use one of actions of the upper list.
-The content in 'Human Previous Inquiry' pertains to previous tasks, and I am not required to complete them.
-The 'Human Pending Instruction' section contains the instructions I need to follow and complete.
-Input user instruction:
-{query}
+            fail_prompt = f"""
 Your previous plan was unsuccessful. Here are your plan and the reasons for the failure {previous_plan}.
 List the actions with comma seperator again.
 Robot:"""
-
+            if self.TOCC:
+                prompt_text += f"\nHuman:{self.tocc_answer}"
+            prompt_text += f"\n{fail_prompt}"
         if self.scoring_mode == 'api':
             # Direct API call mode - use chat completions API
-            messages = [{"role": "user", "content": prompt_text}]
-            response = openai.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                temperature=0.,
-                max_tokens=4096
-            )
-            answer = response.choices[0].message.content.strip()
+            answer = self.llm_api_call(prompt_text)
         else:
             with user():
                 lm = self.planner_model + prompt_text
@@ -241,13 +230,46 @@ Robot:"""
             answer = lm['answer']
         if "MiniMax" in self.model_name:
             answer = re.sub(r'<think>.*?</think>', '', answer, flags=re.DOTALL)
-        print(answer)
         answer = answer.strip()
         answer = answer.replace('Robot: ', '')
         actions = [action.strip(' 1234567890.') for action in answer.split(',')]
         step_seq = actions
         return step_seq, skill_set_size_seq
+    
+    def tocc_step(self, query):
+        TOCC_hint = f"""
+                    Human pending instruction may contain vague referring expressions, such as ``electronic devices'', ``beverages'', ``fruits'', and ``containers'', which are not specific items. \n
+                    You are a robot, your task is to make the `Human Pending Instruction" clear. \n
+                    Do not add extra commentary or conversation or the hole plan, only output the clear instruction. \n
+                    Use the previous context below to resolve the referring expressions:\n
+                    Previous context:\n
+                    {query.strip()}\n
+                    Please make the `Human Pending Instruction" clear:"""
+        answer = self.llm_api_call(TOCC_hint, max_token=1024)
+        if "MiniMax" in self.model_name:
+            answer = re.sub(r'<think>.*?</think>', '', answer, flags=re.DOTALL)
+        return answer
 
+    def llm_api_call(self, prompt, max_token=4096):
+        messages = [{"role": "user", "content": prompt}]
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                response = openai.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages,
+                    temperature=0.,
+                    max_tokens=max_token
+                )
+                reasoning = response.choices[0].message.content.strip()
+                break
+            except openai.InternalServerError as e:
+                if attempt < max_retries - 1:
+                    log.warning(f"OpenAI API overloaded, retrying (attempt {attempt + 1}/{max_retries})")
+                    continue
+                raise 
+        answer = response.choices[0].message.content.strip()
+        return answer
 
     def plan_step_by_step(self, query, prev_steps=(), prev_msgs=(), wrong_steps=(), wrong_action_msg=(), reference=None):
         if len(prev_steps) >= self.max_steps:

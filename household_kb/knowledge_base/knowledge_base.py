@@ -219,9 +219,9 @@ class KnowledgeBase:
             # Strip leading step number and period
             action_str = re.sub(r'^\d+\.\s*', '', action_str.strip()).lower()
 
-            if action_str == "done":
+            if action_str in ['done', 'done.', 'done.\n']:
                 validated_actions.append(("done", None))
-                continue
+                break
 
             # Parse action and object name
             matched = False
